@@ -6,7 +6,4 @@ Python version: 3.7
 Run the following commands:
  * `pip install requests` 
  * `pip install beautifulsoup4`
- * 'python basic_scraper.py'
-
-
-
+ * `python basic_scraper.py`
