@@ -3,18 +3,57 @@
 # imports ###########################################################################################################################
 #####################################################################################################################################
 import os
+import logging
+import re
+import json
+from contextlib import closing
 from requests import get 
 from requests.exceptions import RequestException
-from contextlib import closing
 from bs4 import BeautifulSoup
 
-# import cusotm helper libary 
-from basic_request import *
+#####################################################################################################################################
+# Helper functions ##################################################################################################################
+#####################################################################################################################################
+
+def simple_get(url):
+    """
+    Attempts to get the content at 'url' by making a HTTP GET request. 
+    If the content-type of response is some kind of HTML/XML, return the 
+    text content, otherwise return None. 
+    """
+    try:
+        with closing(get(url, stream=True)) as resp:
+            if is_good_response(resp):
+                return resp.content
+            else:
+                return None
+    except RequestException as e:
+        log_error('Error during request to {0} : {1}'.format(url,str(e)))
+        return None
 
 
+def is_good_response(resp):
+    """
+    Returns True if the response seems to be HTML, False otherwise
+    """
+    content_types = ("html","json","csv")
+    content_type = resp.headers['Content-Type'].lower()
+    return (resp.status_code == 200
+            and content_type is not None
+            and any(ct in content_type for ct in content_types))
+
+def log_error(e):
+    """
+    It is always a good idea to log errors
+    This function just prints them, but you can 
+    make it do anything.
+    """
+    print(e)
+
 #####################################################################################################################################
 #####################################################################################################################################
 #####################################################################################################################################
+
 
 # url we want to scrape
 url = 'https://archives.library.illinois.edu/archon/?p=collections/findingaid&id=4719&q=correspondence&rootcontentid=83972#id83972'
@@ -43,6 +82,7 @@ file_name = "data.csv"
 if os.path.exists(file_name):
   os.remove(file_name)
 
+print("Writing data file...")
 f = open(file_name, "w+")
 # set the CSV seperation character
 f.write("sep=|\n")
@@ -57,3 +97,4 @@ for box_title, box_content in zip(box_titles, box_contents):
         f.write(line)
 
 f.close()
+print("Done!")
